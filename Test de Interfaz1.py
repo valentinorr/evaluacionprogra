@@ -130,6 +130,39 @@ class Aplicacion(CTk):
         boton_generar_menu = CTkButton(self.tab_ingredientes, text="Generar Menú", command=self.mostrar_pestaña_pedido)
         boton_generar_menu.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
 
+    def crear_interfaz_pedido(self):
+        frame_superior = CTkFrame(self.tab_pedido)
+        frame_superior.pack(fill="x", padx=10, pady=5)
+
+        label_menus = CTkLabel(frame_superior, text="Menús Disponibles:")
+        label_menus.grid(row=0, column=0, columnspan=2, padx=10, pady=5)
+
+        for idx, menu in enumerate(self.menus_disponibles):
+            boton_menu = CTkButton(frame_superior, text=f"{menu.nombre} - ${menu.precio}", 
+                                   command=lambda m=menu: self.agregar_menu_a_pedido(m))
+            boton_menu.grid(row=idx+1, column=0, padx=5, pady=5)
+
+        frame_intermedio = CTkFrame(self.tab_pedido)
+        frame_intermedio.pack(fill="x", padx=10, pady=5)
+
+        self.treeview_pedido = ttk.Treeview(frame_intermedio, columns=("Nombre", "Cantidad", "Precio Unitario"), show="headings")
+        self.treeview_pedido.heading("Nombre", text="Nombre del Menú")
+        self.treeview_pedido.heading("Cantidad", text="Cantidad")
+        self.treeview_pedido.heading("Precio Unitario", text="Precio Unitario")
+        self.treeview_pedido.pack(side="left", fill="x", expand=True)
+
+        self.label_total = CTkLabel(frame_intermedio, text="Total: $0")
+        self.label_total.pack(side="right", padx=10)
+
+        boton_eliminar_menu = CTkButton(frame_intermedio, text="Eliminar Menú", command=self.eliminar_menu_del_pedido)
+        boton_eliminar_menu.pack(side="right", padx=10)
+
+        frame_inferior = CTkFrame(self.tab_pedido)
+        frame_inferior.pack(fill="x", padx=10, pady=5)
+
+        boton_generar_boleta = CTkButton(frame_inferior, text="Generar Boleta", command=self.generar_boleta)
+        boton_generar_boleta.pack(padx=10, pady=10)
+
     def agregar_ingrediente(self):
         nombre = self.entry_nombre.get().strip().lower()
         cantidad = self.entry_cantidad.get().strip()
@@ -146,20 +179,51 @@ class Aplicacion(CTk):
         self.treeview_ingredientes.insert('', 'end', values=(nombre, cantidad))
 
         # Limpiar las entradas
-        self.entry_nombre.delete(0, tk.END)
-        self.entry_cantidad.delete(0, tk.END)
+        self.entry_nombre.delete(0, 'end')
+        self.entry_cantidad.delete(0, 'end')
 
     def eliminar_ingrediente(self):
-        # agregar la lógica para eliminar un ingrediente del stock y del Treeview
-        pass
+        selected_item = self.treeview_ingredientes.selection()
+        if not selected_item:
+            messagebox.showerror("Error", "Seleccione un ingrediente para eliminar.")
+            return
+
+        nombre = self.treeview_ingredientes.item(selected_item, 'values')[0]
+        self.stock.eliminar_ingrediente(nombre)
+        self.treeview_ingredientes.delete(selected_item)
+
+    def agregar_menu_a_pedido(self, menu):
+        if menu.preparar(self.stock.ingredientes):
+            self.pedido.agregar_menu(menu)
+            self.treeview_pedido.insert('', 'end', values=(menu.nombre, 1, menu.precio))
+            self.actualizar_total()
+        else:
+            messagebox.showerror("Error", "No hay suficientes ingredientes en el stock.")
+
+    def eliminar_menu_del_pedido(self):
+        selected_item = self.treeview_pedido.selection()
+        if not selected_item:
+            messagebox.showerror("Error", "Seleccione un menú para eliminar.")
+            return
+
+        menu_nombre = self.treeview_pedido.item(selected_item, 'values')[0]
+        menu_a_eliminar = next((menu for menu in self.pedido.menus if menu.nombre == menu_nombre), None)
+
+        if menu_a_eliminar:
+            self.pedido.eliminar_menu(menu_a_eliminar)
+            self.treeview_pedido.delete(selected_item)
+            self.actualizar_total()
+
+    def actualizar_total(self):
+        total = self.pedido.total()
+        self.label_total.configure(text=f"Total: ${total}")
+
+    def generar_boleta(self):
+        self.pedido.generar_boleta()
+        messagebox.showinfo("Boleta Generada", "La boleta ha sido generada exitosamente.")
 
     def mostrar_pestaña_pedido(self):
-        # agregar la lógica para mostrar la pestaña del pedido o cualquier otra funcionalidad
-        pass
-
-    def crear_interfaz_pedido(self):
-        # agregar el código para la pestaña de "Pedido"
-        pass
+        self.notebook.select(self.tab_pedido)
 
 if __name__ == "__main__":
     app = Aplicacion()
