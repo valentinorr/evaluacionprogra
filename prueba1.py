@@ -123,3 +123,36 @@ class Aplicacion(CTk):
 
         boton_generar_menu = CTkButton(self.tab_ingredientes, text="Generar Menú", command=self.mostrar_pestaña_pedido)
         boton_generar_menu.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
+
+    def crear_interfaz_pedido(self):
+        frame_superior = CTkFrame(self.tab_pedido)
+        frame_superior.pack(fill="x", padx=10, pady=5)
+
+        label_menus = CTkLabel(frame_superior, text="Menús Disponibles:")
+        label_menus.grid(row=0, column=0, columnspan=2, padx=10, pady=5)
+
+        for idx, menu in enumerate(self.menus_disponibles):
+            boton_menu = CTkButton(frame_superior, text=f"{menu.nombre} - ${menu.precio}", 
+                                   command=lambda m=menu: self.agregar_menu_a_pedido(m))
+            boton_menu.grid(row=idx+1, column=0, padx=5, pady=5)
+
+        frame_intermedio = CTkFrame(self.tab_pedido)
+        frame_intermedio.pack(fill="x", padx=10, pady=5)
+
+        self.treeview_pedido = ttk.Treeview(frame_intermedio, columns=("Nombre", "Cantidad", "Precio Unitario"), show="headings")
+        self.treeview_pedido.heading("Nombre", text="Nombre del Menú")
+        self.treeview_pedido.heading("Cantidad", text="Cantidad")
+        self.treeview_pedido.heading("Precio Unitario", text="Precio Unitario")
+        self.treeview_pedido.pack(side="left", fill="x", expand=True)
+
+        self.label_total = CTkLabel(frame_intermedio, text="Total: $0")
+        self.label_total.pack(side="right", padx=10)
+
+        boton_eliminar_menu = CTkButton(frame_intermedio, text="Eliminar Menú", command=self.eliminar_menu_del_pedido)
+        boton_eliminar_menu.pack(side="right", padx=10)
+
+        frame_inferior = CTkFrame(self.tab_pedido)
+        frame_inferior.pack(fill="x", padx=10, pady=5)
+
+        boton_generar_boleta = CTkButton(frame_inferior, text="Generar Boleta", command=self.generar_boleta)
+        boton_generar_boleta.pack(padx=10, pady=10)
