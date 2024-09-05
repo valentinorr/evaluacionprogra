@@ -156,3 +156,58 @@ class Aplicacion(CTk):
 
         boton_generar_boleta = CTkButton(frame_inferior, text="Generar Boleta", command=self.generar_boleta)
         boton_generar_boleta.pack(padx=10, pady=10)
+
+    def agregar_ingrediente(self):
+        nombre = self.entry_nombre.get().strip().lower()
+        try:
+            cantidad = int(self.entry_cantidad.get())
+            if cantidad <= 0:
+                raise ValueError
+            self.stock.agregar_ingrediente(Ingrediente(nombre, cantidad))
+            messagebox.showinfo("Éxito", f"Ingrediente {nombre.capitalize()} agregado al stock")
+            self.actualizar_treeview_ingredientes()
+        except ValueError:
+            messagebox.showerror("Error", "Cantidad debe ser un número entero positivo")
+
+    def actualizar_treeview_ingredientes(self):
+        for item in self.treeview_ingredientes.get_children():
+            self.treeview_ingredientes.delete(item)
+        for nombre, cantidad in self.stock.ingredientes.items():
+            self.treeview_ingredientes.insert("", "end", values=(nombre.capitalize(), cantidad))
+
+    def eliminar_ingrediente(self):
+        selected_item = self.treeview_ingredientes.selection()
+        if selected_item:
+            item = self.treeview_ingredientes.item(selected_item)
+            nombre = item["values"][0].strip().lower()
+            self.stock.eliminar_ingrediente(nombre)
+            self.actualizar_treeview_ingredientes()
+            messagebox.showinfo("Éxito", f"Ingrediente {nombre.capitalize()} eliminado del stock")
+        else:
+            messagebox.showwarning("Advertencia", "Seleccione un ingrediente para eliminar")
+
+    def mostrar_pestaña_pedido(self):
+        self.notebook.select(self.tab_pedido)
+
+    def agregar_menu_a_pedido(self, menu):
+        if menu.preparar(self.stock.ingredientes):
+            self.pedido.agregar_menu(menu)
+            self.actualizar_treeview_pedido()
+            self.actualizar_total()
+            messagebox.showinfo("Éxito", f"Menú {menu.nombre} agregado al pedido")
+        else:
+            messagebox.showwarning("Error", f"No hay suficientes ingredientes para preparar {menu.nombre}")
+
+    def eliminar_menu_del_pedido(self):
+        selected_item = self.treeview_pedido.selection()
+        if selected_item:
+            item = self.treeview_pedido.item(selected_item)
+            menu_nombre = item["values"][0]
+            menu = next((m for m in self.pedido.menus if m.nombre == menu_nombre), None)
+            if menu:
+                self.pedido.eliminar_menu(menu)
+                self.actualizar_treeview_pedido()
+                self.actualizar_total()
+                messagebox.showinfo("Éxito", f"Menú {menu.nombre} eliminado del pedido")
+        else:
+            messagebox.showwarning("Error", "Seleccione un menú para eliminar")
