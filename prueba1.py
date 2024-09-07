@@ -99,30 +99,43 @@ class Aplicacion(CTk):
         self.crear_interfaz_pedido()
 
     def crear_interfaz_ingredientes(self):
-        label_nombre = CTkLabel(self.tab_ingredientes, text="Nombre del Ingrediente:")
+    # Marco para organizar la entrada de ingredientes
+        frame_izquierdo = CTkFrame(self.tab_ingredientes)
+        frame_izquierdo.grid(row=0, column=0, padx=20, pady=20, sticky="n")
+
+
+        label_nombre = CTkLabel(frame_izquierdo, text="Nombre del Ingrediente:")
         label_nombre.grid(row=0, column=0, padx=10, pady=10)
-        self.entry_nombre = CTkEntry(self.tab_ingredientes)
+        self.entry_nombre = CTkEntry(frame_izquierdo)
         self.entry_nombre.grid(row=0, column=1, padx=10, pady=10)
 
-        label_cantidad = CTkLabel(self.tab_ingredientes, text="Cantidad:")
+        label_cantidad = CTkLabel(frame_izquierdo, text="Cantidad:")
         label_cantidad.grid(row=1, column=0, padx=10, pady=10)
-        self.entry_cantidad = CTkEntry(self.tab_ingredientes)
+        self.entry_cantidad = CTkEntry(frame_izquierdo)
         self.entry_cantidad.grid(row=1, column=1, padx=10, pady=10)
 
-        boton_ingresar = CTkButton(self.tab_ingredientes, text="Ingresar Ingrediente", command=self.agregar_ingrediente)
+
+        boton_ingresar = CTkButton(frame_izquierdo, text="Ingresar Ingrediente", command=self.agregar_ingrediente)
         boton_ingresar.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 
-        # Treeview para mostrar los ingredientes
-        self.treeview_ingredientes = ttk.Treeview(self.tab_ingredientes, columns=("Nombre", "Cantidad"), show="headings")
+    # Treeview para mostrar los ingredientes, alineado a la derecha
+        frame_derecho = CTkFrame(self.tab_ingredientes)
+        frame_derecho.grid(row=0, column=1, padx=10, pady=20, sticky="n")
+        self.treeview_ingredientes = ttk.Treeview(frame_derecho, columns=("Nombre", "Cantidad"), show="headings", height=20)
         self.treeview_ingredientes.heading("Nombre", text="Nombre")
         self.treeview_ingredientes.heading("Cantidad", text="Cantidad")
-        self.treeview_ingredientes.grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+        self.treeview_ingredientes.column("Nombre", width=200)
+        self.treeview_ingredientes.column("Cantidad", width=200)
+        self.treeview_ingredientes.grid(row=0, column=0, padx=10, pady=10)
 
-        boton_eliminar = CTkButton(self.tab_ingredientes, text="Eliminar Ingrediente", command=self.eliminar_ingrediente)
-        boton_eliminar.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+    # Botón para eliminar ingrediente
+        boton_eliminar = CTkButton(frame_derecho, text="Eliminar Ingrediente", command=self.eliminar_ingrediente)
+        boton_eliminar.grid(row=1, column=0, padx=10, pady=10)
 
+    # Botón para generar menú
         boton_generar_menu = CTkButton(self.tab_ingredientes, text="Generar Menú", command=self.mostrar_pestaña_pedido)
-        boton_generar_menu.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
+        boton_generar_menu.grid(row=1, column=1, padx=10, pady=10, sticky="s")
+
 
     def crear_interfaz_pedido(self):
         frame_superior = CTkFrame(self.tab_pedido)

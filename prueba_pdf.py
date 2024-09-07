@@ -60,12 +60,34 @@ class Pedido:
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
-        pdf.cell(200, 10, txt="Boleta de Compra", ln=True, align="C")
+        
+        # Información del restaurante
+        pdf.cell(200, 10, txt="Restaurante XYZ", ln=True, align="C")
+        pdf.cell(200, 10, txt="RUT: 99.999.999-9", ln=True, align="C")
+        pdf.cell(200, 10, txt="Dirección: Calle Falsa 123", ln=True, align="C")
+        pdf.cell(200, 10, txt="Teléfono: +56 9 9999 9999", ln=True, align="C")
+        pdf.cell(200, 10, txt="=================================", ln=True, align="C")
+
+        # Tabla de pedidos
+        pdf.cell(100, 10, txt="Menú", border=1)
+        pdf.cell(40, 10, txt="Cantidad", border=1)
+        pdf.cell(50, 10, txt="Precio", border=1, ln=True)
 
         for menu in self.menus:
-            pdf.cell(200, 10, txt=f"{menu.nombre} - ${menu.precio}", ln=True)
+            pdf.cell(100, 10, txt=menu.nombre, border=1)
+            pdf.cell(40, 10, txt="1", border=1)
+            pdf.cell(50, 10, txt=f"${menu.precio}", border=1, ln=True)
 
-        pdf.cell(200, 10, txt=f"Total: ${self.total()}", ln=True)
+        # Cálculos de total, IVA y subtotal
+        subtotal = self.total()
+        iva = subtotal * 0.19
+        total = subtotal + iva
+
+        pdf.cell(200, 10, txt="=================================", ln=True, align="C")
+        pdf.cell(200, 10, txt=f"Subtotal: ${subtotal:.2f}", ln=True)
+        pdf.cell(200, 10, txt=f"IVA (19%): ${iva:.2f}", ln=True)
+        pdf.cell(200, 10, txt=f"Total: ${total:.2f}", ln=True)
+
         pdf.output(archivo_pdf)
 
 class Aplicacion(CTk):
@@ -91,7 +113,6 @@ class Aplicacion(CTk):
         self.tab_ingredientes = CTkFrame(self.notebook)
         self.tab_pedido = CTkFrame(self.notebook)
 
-        # Añadir las pestañas al notebook
         self.notebook.add(self.tab_ingredientes, text="Ingreso de Ingredientes")
         self.notebook.add(self.tab_pedido, text="Pedido")
 
@@ -100,35 +121,40 @@ class Aplicacion(CTk):
         self.crear_interfaz_pedido()
 
     def crear_interfaz_ingredientes(self):
-        # Colocar el label y entry para el nombre del ingrediente
-        label_nombre = CTkLabel(self.tab_ingredientes, text="Nombre del Ingrediente:")
+        # Marco para organizar la entrada de ingredientes
+        frame_izquierdo = CTkFrame(self.tab_ingredientes)
+        frame_izquierdo.grid(row=0, column=0, padx=20, pady=20, sticky="n")
+
+        label_nombre = CTkLabel(frame_izquierdo, text="Nombre del Ingrediente:")
         label_nombre.grid(row=0, column=0, padx=10, pady=10)
-        self.entry_nombre = CTkEntry(self.tab_ingredientes)
+        self.entry_nombre = CTkEntry(frame_izquierdo)
         self.entry_nombre.grid(row=0, column=1, padx=10, pady=10)
 
-        # Colocar el label y entry para la cantidad
-        label_cantidad = CTkLabel(self.tab_ingredientes, text="Cantidad:")
+        label_cantidad = CTkLabel(frame_izquierdo, text="Cantidad:")
         label_cantidad.grid(row=1, column=0, padx=10, pady=10)
-        self.entry_cantidad = CTkEntry(self.tab_ingredientes)
+        self.entry_cantidad = CTkEntry(frame_izquierdo)
         self.entry_cantidad.grid(row=1, column=1, padx=10, pady=10)
 
-        # Botón para ingresar ingrediente
-        boton_ingresar = CTkButton(self.tab_ingredientes, text="Ingresar Ingrediente", command=self.agregar_ingrediente)
+        boton_ingresar = CTkButton(frame_izquierdo, text="Ingresar Ingrediente", command=self.agregar_ingrediente)
         boton_ingresar.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 
-        # Treeview para mostrar los ingredientes
-        self.treeview_ingredientes = ttk.Treeview(self.tab_ingredientes, columns=("Nombre", "Cantidad"), show="headings")
+        # Treeview para mostrar los ingredientes, alineado a la derecha
+        frame_derecho = CTkFrame(self.tab_ingredientes)
+        frame_derecho.grid(row=0, column=1, padx=10, pady=20, sticky="n")
+        self.treeview_ingredientes = ttk.Treeview(frame_derecho, columns=("Nombre", "Cantidad"), show="headings", height=20)
         self.treeview_ingredientes.heading("Nombre", text="Nombre")
         self.treeview_ingredientes.heading("Cantidad", text="Cantidad")
-        self.treeview_ingredientes.grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+        self.treeview_ingredientes.column("Nombre", width=200)
+        self.treeview_ingredientes.column("Cantidad", width=200)
+        self.treeview_ingredientes.grid(row=0, column=0, padx=10, pady=10)
 
         # Botón para eliminar ingrediente
-        boton_eliminar = CTkButton(self.tab_ingredientes, text="Eliminar Ingrediente", command=self.eliminar_ingrediente)
-        boton_eliminar.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+        boton_eliminar = CTkButton(frame_derecho, text="Eliminar Ingrediente", command=self.eliminar_ingrediente)
+        boton_eliminar.grid(row=1, column=0, padx=10, pady=10)
 
         # Botón para generar menú
         boton_generar_menu = CTkButton(self.tab_ingredientes, text="Generar Menú", command=self.mostrar_pestaña_pedido)
-        boton_generar_menu.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
+        boton_generar_menu.grid(row=1, column=1, padx=10, pady=10, sticky="s")
 
     def crear_interfaz_pedido(self):
         frame_superior = CTkFrame(self.tab_pedido)
@@ -149,81 +175,84 @@ class Aplicacion(CTk):
         self.treeview_pedido.heading("Nombre", text="Nombre del Menú")
         self.treeview_pedido.heading("Cantidad", text="Cantidad")
         self.treeview_pedido.heading("Precio Unitario", text="Precio Unitario")
-        self.treeview_pedido.pack(side="left", fill="x", expand=True)
+        self.treeview_pedido.column("Nombre", width=200)
+        self.treeview_pedido.column("Cantidad", width=100)
+        self.treeview_pedido.column("Precio Unitario", width=100)
+        self.treeview_pedido.grid(row=0, column=0, padx=5, pady=5)
 
-        self.label_total = CTkLabel(frame_intermedio, text="Total: $0")
-        self.label_total.pack(side="right", padx=10)
-
-        boton_eliminar_menu = CTkButton(frame_intermedio, text="Eliminar Menú", command=self.eliminar_menu_del_pedido)
-        boton_eliminar_menu.pack(side="right", padx=10)
+        boton_eliminar_pedido = CTkButton(frame_intermedio, text="Eliminar Menú del Pedido", 
+                                          command=self.eliminar_menu_del_pedido)
+        boton_eliminar_pedido.grid(row=1, column=0, padx=5, pady=5)
 
         frame_inferior = CTkFrame(self.tab_pedido)
         frame_inferior.pack(fill="x", padx=10, pady=5)
 
         boton_generar_boleta = CTkButton(frame_inferior, text="Generar Boleta", command=self.generar_boleta)
-        boton_generar_boleta.pack(padx=10, pady=10)
+        boton_generar_boleta.grid(row=0, column=0, padx=5, pady=5)
 
     def agregar_ingrediente(self):
-        nombre = self.entry_nombre.get().strip().lower()
-        cantidad = self.entry_cantidad.get().strip()
+        nombre = self.entry_nombre.get()
+        cantidad = self.entry_cantidad.get()
 
         if not nombre or not cantidad.isdigit():
-            messagebox.showerror("Error", "Por favor, ingrese un nombre válido y una cantidad numérica.")
+            messagebox.showerror("Error", "Nombre inválido o cantidad no numérica")
             return
 
-        cantidad = int(cantidad)
-        ingrediente = Ingrediente(nombre, cantidad)
+        ingrediente = Ingrediente(nombre, int(cantidad))
         self.stock.agregar_ingrediente(ingrediente)
+        self.actualizar_vista_ingredientes()
 
-        # Actualizar el Treeview
-        self.treeview_ingredientes.insert('', 'end', values=(nombre, cantidad))
+    def actualizar_vista_ingredientes(self):
+        for i in self.treeview_ingredientes.get_children():
+            self.treeview_ingredientes.delete(i)
 
-        # Limpiar las entradas
-        self.entry_nombre.delete(0, 'end')
-        self.entry_cantidad.delete(0, 'end')
+        for nombre, cantidad in self.stock.ingredientes.items():
+            self.treeview_ingredientes.insert("", "end", values=(nombre, cantidad))
 
     def eliminar_ingrediente(self):
-        selected_item = self.treeview_ingredientes.selection()
-        if not selected_item:
-            messagebox.showerror("Error", "Seleccione un ingrediente para eliminar.")
+        seleccion = self.treeview_ingredientes.selection()
+        if not seleccion:
+            messagebox.showerror("Error", "Selecciona un ingrediente para eliminar")
             return
 
-        nombre = self.treeview_ingredientes.item(selected_item, 'values')[0]
-        self.stock.eliminar_ingrediente(nombre)
-        self.treeview_ingredientes.delete(selected_item)
+        ingrediente_seleccionado = self.treeview_ingredientes.item(seleccion)["values"][0]
+        self.stock.eliminar_ingrediente(ingrediente_seleccionado)
+        self.actualizar_vista_ingredientes()
 
     def agregar_menu_a_pedido(self, menu):
         if menu.preparar(self.stock.ingredientes):
             self.pedido.agregar_menu(menu)
-            self.treeview_pedido.insert('', 'end', values=(menu.nombre, 1, menu.precio))
-            self.actualizar_total()
+            self.actualizar_vista_pedido()
         else:
-            messagebox.showerror("Error", "No hay suficientes ingredientes en el stock.")
+            messagebox.showerror("Error", f"No hay suficientes ingredientes para preparar {menu.nombre}")
+
+    def actualizar_vista_pedido(self):
+        for i in self.treeview_pedido.get_children():
+            self.treeview_pedido.delete(i)
+
+        for menu in self.pedido.menus:
+            self.treeview_pedido.insert("", "end", values=(menu.nombre, 1, menu.precio))
 
     def eliminar_menu_del_pedido(self):
-        selected_item = self.treeview_pedido.selection()
-        if not selected_item:
-            messagebox.showerror("Error", "Seleccione un menú para eliminar.")
+        seleccion = self.treeview_pedido.selection()
+        if not seleccion:
+            messagebox.showerror("Error", "Selecciona un menú para eliminar")
             return
 
-        menu_nombre = self.treeview_pedido.item(selected_item, 'values')[0]
-        menu_a_eliminar = next((menu for menu in self.pedido.menus if menu.nombre == menu_nombre), None)
+        menu_seleccionado = self.treeview_pedido.item(seleccion)["values"][0]
+        for menu in self.pedido.menus:
+            if menu.nombre == menu_seleccionado:
+                self.pedido.eliminar_menu(menu)
+                break
 
-        if menu_a_eliminar:
-            self.pedido.eliminar_menu(menu_a_eliminar)
-            self.treeview_pedido.delete(selected_item)
-            self.actualizar_total()
-
-    def actualizar_total(self):
-        total = self.pedido.total()
-        self.label_total.configure(text=f"Total: ${total}")
-
-    def generar_boleta(self):
-        self.pedido.generar_boleta()
-        messagebox.showinfo("Boleta Generada", "La boleta ha sido generada exitosamente.")
+        self.actualizar_vista_pedido()
 
     def mostrar_pestaña_pedido(self):
         self.notebook.select(self.tab_pedido)
+
+    def generar_boleta(self):
+        self.pedido.generar_boleta("boleta_restaurante.pdf")
+        messagebox.showinfo("Boleta", "Boleta generada exitosamente como 'boleta_restaurante.pdf'")
 
 if __name__ == "__main__":
     app = Aplicacion()
