@@ -211,3 +211,25 @@ class Aplicacion(CTk):
                 messagebox.showinfo("Éxito", f"Menú {menu.nombre} eliminado del pedido")
         else:
             messagebox.showwarning("Error", "Seleccione un menú para eliminar")
+
+    def actualizar_treeview_pedido(self):
+        for item in self.treeview_pedido.get_children():
+            self.treeview_pedido.delete(item)
+        for menu in self.pedido.menus:
+            self.treeview_pedido.insert("", "end", values=(menu.nombre, 1, menu.precio))
+
+    def actualizar_total(self):
+        total = self.pedido.total()
+        self.label_total.configure(text=f"Total: ${total}")
+
+
+    def generar_boleta(self):
+        if not self.pedido.menus:
+            messagebox.showwarning("Error", "No hay menús en el pedido para generar la boleta")
+            return
+
+        self.pedido.generar_boleta()
+        messagebox.showinfo("Éxito", "Boleta generada exitosamente")
+
+app = Aplicacion()
+app.mainloop()
