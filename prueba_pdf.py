@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from customtkinter import CTk, CTkEntry, CTkButton, CTkFrame, CTkLabel
 from fpdf import FPDF
+from PIL import Image, ImageTk  # Importar PIL para manejar imágenes
 
 class Ingrediente:
     def __init__(self, nombre, cantidad):
@@ -105,6 +106,12 @@ class Aplicacion(CTk):
             Menu("Hamburguesa", 3500, {"pan de hamburguesa": 1, "lamina de queso": 1, "hamburguesa de carne": 1})
         ]
 
+        # Cargar iconos de los menús
+        self.icono_papas_fritas = ImageTk.PhotoImage(Image.open("icono_papas_fritas_64x64.png"), size =(100,100))  #No se cambia el tamaño
+        self.icono_pepsi = ImageTk.PhotoImage(Image.open("icono_cola_64x64.png"), size =(100,100)) #No se cambia el tamaño
+        self.icono_completo = ImageTk.PhotoImage(Image.open("icono_hotdog_sin_texto_64x64.png"), size =(100,100)) #No se cambia el tamaño
+        self.icono_hamburguesa = ImageTk.PhotoImage(Image.open("icono_hamburguesa_negra_64x64.png"),size =(100,100)) #No se cambia el tamaño
+
         # Crear el notebook para las pestañas
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True)
@@ -162,98 +169,85 @@ class Aplicacion(CTk):
 
         label_menus = CTkLabel(frame_superior, text="Menús Disponibles:")
         label_menus.grid(row=0, column=0, columnspan=2, padx=10, pady=5)
+    
+        # Agregar los botones con íconos
+        boton_menu_papas = CTkButton(frame_superior, image=self.icono_papas_fritas, text="Papas Fritas - $500", 
+                                     command=lambda m=self.menus_disponibles[0]: self.agregar_menu_a_pedido(m))
+        boton_menu_papas.grid(row=1, column=0, padx=10, pady=10)
 
-        for idx, menu in enumerate(self.menus_disponibles):
-            boton_menu = CTkButton(frame_superior, text=f"{menu.nombre} - ${menu.precio}", 
-                                   command=lambda m=menu: self.agregar_menu_a_pedido(m))
-            boton_menu.grid(row=idx+1, column=0, padx=5, pady=5)
+        boton_menu_pepsi = CTkButton(frame_superior, image=self.icono_pepsi, text="Pepsi - $1100", 
+                                     command=lambda m=self.menus_disponibles[1]: self.agregar_menu_a_pedido(m))
+        boton_menu_pepsi.grid(row=1, column=1, padx=10, pady=10)
 
-        frame_intermedio = CTkFrame(self.tab_pedido)
-        frame_intermedio.pack(fill="x", padx=10, pady=5)
+        boton_menu_completo = CTkButton(frame_superior, image=self.icono_completo, text="Completo - $1800", 
+                                        command=lambda m=self.menus_disponibles[2]: self.agregar_menu_a_pedido(m))
+        boton_menu_completo.grid(row=2, column=0, padx=10, pady=10)
 
-        self.treeview_pedido = ttk.Treeview(frame_intermedio, columns=("Nombre", "Cantidad", "Precio Unitario"), show="headings")
-        self.treeview_pedido.heading("Nombre", text="Nombre del Menú")
+        boton_menu_hamburguesa = CTkButton(frame_superior, image=self.icono_hamburguesa, text="Hamburguesa - $3500", 
+                                           command=lambda m=self.menus_disponibles[3]: self.agregar_menu_a_pedido(m))
+        boton_menu_hamburguesa.grid(row=2, column=1, padx=10, pady=10)
+
+        # Treeview para mostrar los pedidos
+        self.treeview_pedido = ttk.Treeview(self.tab_pedido, columns=("Menú", "Cantidad", "Precio"), show="headings", height=10)
+        self.treeview_pedido.heading("Menú", text="Menú")
         self.treeview_pedido.heading("Cantidad", text="Cantidad")
-        self.treeview_pedido.heading("Precio Unitario", text="Precio Unitario")
-        self.treeview_pedido.column("Nombre", width=200)
-        self.treeview_pedido.column("Cantidad", width=100)
-        self.treeview_pedido.column("Precio Unitario", width=100)
-        self.treeview_pedido.grid(row=0, column=0, padx=5, pady=5)
+        self.treeview_pedido.heading("Precio", text="Precio")
+        self.treeview_pedido.column("Menú", width=250)
+        self.treeview_pedido.column("Cantidad", width=250)
+        self.treeview_pedido.column("Precio", width=250)
+        self.treeview_pedido.pack(padx=10, pady=10)
 
-        boton_eliminar_pedido = CTkButton(frame_intermedio, text="Eliminar Menú del Pedido", 
-                                          command=self.eliminar_menu_del_pedido)
-        boton_eliminar_pedido.grid(row=1, column=0, padx=5, pady=5)
+        # Botón para eliminar del pedido
+        boton_eliminar_pedido = CTkButton(self.tab_pedido, text="Eliminar del Pedido", command=self.eliminar_menu_de_pedido)
+        boton_eliminar_pedido.pack(pady=5)
 
-        frame_inferior = CTkFrame(self.tab_pedido)
-        frame_inferior.pack(fill="x", padx=10, pady=5)
-
-        boton_generar_boleta = CTkButton(frame_inferior, text="Generar Boleta", command=self.generar_boleta)
-        boton_generar_boleta.grid(row=0, column=0, padx=5, pady=5)
+        # Botón para generar la boleta
+        boton_generar_boleta = CTkButton(self.tab_pedido, text="Generar Boleta", command=self.generar_boleta)
+        boton_generar_boleta.pack(pady=5)
 
     def agregar_ingrediente(self):
-        nombre = self.entry_nombre.get()
-        cantidad = self.entry_cantidad.get()
+        nombre = self.entry_nombre.get().strip()
+        cantidad = self.entry_cantidad.get().strip()
 
-        if not nombre or not cantidad.isdigit():
-            messagebox.showerror("Error", "Nombre inválido o cantidad no numérica")
-            return
-
-        ingrediente = Ingrediente(nombre, int(cantidad))
-        self.stock.agregar_ingrediente(ingrediente)
-        self.actualizar_vista_ingredientes()
-
-    def actualizar_vista_ingredientes(self):
-        for i in self.treeview_ingredientes.get_children():
-            self.treeview_ingredientes.delete(i)
-
-        for nombre, cantidad in self.stock.ingredientes.items():
-            self.treeview_ingredientes.insert("", "end", values=(nombre, cantidad))
+        if nombre and cantidad.isdigit():
+            ingrediente = Ingrediente(nombre, int(cantidad))
+            self.stock.agregar_ingrediente(ingrediente)
+            self.treeview_ingredientes.insert("", "end", values=(nombre.capitalize(), cantidad))
+        else:
+            messagebox.showerror("Error", "Por favor ingrese un nombre y una cantidad válida")
 
     def eliminar_ingrediente(self):
-        seleccion = self.treeview_ingredientes.selection()
-        if not seleccion:
-            messagebox.showerror("Error", "Selecciona un ingrediente para eliminar")
-            return
-
-        ingrediente_seleccionado = self.treeview_ingredientes.item(seleccion)["values"][0]
-        self.stock.eliminar_ingrediente(ingrediente_seleccionado)
-        self.actualizar_vista_ingredientes()
+        seleccionado = self.treeview_ingredientes.selection()
+        if seleccionado:
+            item = self.treeview_ingredientes.item(seleccionado)
+            nombre = item['values'][0].lower()
+            self.stock.eliminar_ingrediente(nombre)
+            self.treeview_ingredientes.delete(seleccionado)
+        else:
+            messagebox.showerror("Error", "Por favor seleccione un ingrediente para eliminar")
 
     def agregar_menu_a_pedido(self, menu):
-        if menu.preparar(self.stock.ingredientes):
+        if menu.es_preparable(self.stock.ingredientes):
             self.pedido.agregar_menu(menu)
-            self.actualizar_vista_pedido()
+            self.treeview_pedido.insert("", "end", values=(menu.nombre, 1, f"${menu.precio}"))
         else:
-            messagebox.showerror("Error", f"No hay suficientes ingredientes para preparar {menu.nombre}")
+            messagebox.showerror("Error", f"Faltan ingredientes para preparar {menu.nombre}")
 
-    def actualizar_vista_pedido(self):
-        for i in self.treeview_pedido.get_children():
-            self.treeview_pedido.delete(i)
+    def eliminar_menu_de_pedido(self):
+        seleccionado = self.treeview_pedido.selection()
+        if seleccionado:
+            self.treeview_pedido.delete(seleccionado)
+            # Aquí deberías eliminar también el menú del pedido, si es necesario
+        else:
+            messagebox.showerror("Error", "Por favor seleccione un menú para eliminar")
 
-        for menu in self.pedido.menus:
-            self.treeview_pedido.insert("", "end", values=(menu.nombre, 1, menu.precio))
-
-    def eliminar_menu_del_pedido(self):
-        seleccion = self.treeview_pedido.selection()
-        if not seleccion:
-            messagebox.showerror("Error", "Selecciona un menú para eliminar")
-            return
-
-        menu_seleccionado = self.treeview_pedido.item(seleccion)["values"][0]
-        for menu in self.pedido.menus:
-            if menu.nombre == menu_seleccionado:
-                self.pedido.eliminar_menu(menu)
-                break
-
-        self.actualizar_vista_pedido()
+    def generar_boleta(self):
+        self.pedido.generar_boleta()
+        messagebox.showinfo("Boleta Generada", "La boleta ha sido generada exitosamente")
 
     def mostrar_pestaña_pedido(self):
         self.notebook.select(self.tab_pedido)
 
-    def generar_boleta(self):
-        self.pedido.generar_boleta("boleta_restaurante.pdf")
-        messagebox.showinfo("Boleta", "Boleta generada exitosamente como 'boleta_restaurante.pdf'")
-
-if __name__ == "__main__":
-    app = Aplicacion()
-    app.mainloop()
+# Crear la instancia de la aplicación
+app = Aplicacion()
+app.mainloop()
